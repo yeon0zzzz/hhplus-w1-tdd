@@ -14,6 +14,9 @@ public record UserPoint(
     }
 
     public UserPoint charge(long amount) {
+
+        invalidAmount(amount);
+
         long updatePoint = this.point + amount;
 
         // 포인트 한도 검증
