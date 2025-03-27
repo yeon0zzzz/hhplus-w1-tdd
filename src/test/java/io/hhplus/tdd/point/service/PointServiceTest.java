@@ -5,6 +5,7 @@ import io.hhplus.tdd.point.TransactionType;
 import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
+import org.apache.catalina.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -139,5 +140,26 @@ class PointServiceTest {
         assertThatThrownBy(() -> pointService.useUserPoint(userId, amount, updateMillis))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining(MessageConstants.INVALID_AMOUNT);
+    }
+
+    @Test
+    @DisplayName("사용자_포인트_조회_테스트")
+    void get_UserPoint_Test() {
+        // given
+        long userId = 1L;
+        long amount = 100L;
+        long updateMillis = System.currentTimeMillis();
+
+        given(userPointRepository.selectById(userId)).willReturn(new UserPoint(userId, amount, updateMillis));
+
+        // when
+        UserPoint userPoint = pointService.getUserPoint(userId);
+
+        // then
+        assertThat(userPoint.id()).isEqualTo(userId);
+        assertThat(userPoint.point()).isEqualTo(amount);
+        assertThat(userPoint.updateMillis()).isEqualTo(updateMillis);
+
+        verify(userPointRepository).selectById(eq(userId));
     }
 }
