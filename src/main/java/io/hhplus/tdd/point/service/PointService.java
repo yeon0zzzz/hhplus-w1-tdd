@@ -40,7 +40,7 @@ public class PointService {
         UserPoint updateUserPoint = selectUserPoint.charge(amount);
 
         // 3. 포인트 이력 생성
-        pointHistoryRepository.insert(userId, updateUserPoint.point(), TransactionType.CHARGE, updateMillis);
+        pointHistoryRepository.insert(userId, amount, TransactionType.CHARGE, updateMillis);
 
         return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
     }
