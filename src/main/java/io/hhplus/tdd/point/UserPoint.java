@@ -18,7 +18,7 @@ public record UserPoint(
 
         // 포인트 한도 검증
         if (updatePoint > MAX_POINT){
-            throw new IllegalArgumentException("최대 포인트 한도를 초과할 수 없습니다.");
+            throw new IllegalArgumentException(MessageConstants.EXCEEDS_POINT_LIMIT);
         }
 
         return new UserPoint(this.id, updatePoint, System.currentTimeMillis());
