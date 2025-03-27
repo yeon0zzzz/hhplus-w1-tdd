@@ -62,6 +62,8 @@ public class PointController {
             @PathVariable long id,
             @RequestBody long amount
     ) {
-        return new UserPoint(0, 0, 0);
+        long updateMillis = System.currentTimeMillis();
+
+        return pointService.useUserPoint(id, amount, updateMillis);
     }
 }

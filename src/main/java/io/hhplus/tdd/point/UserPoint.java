@@ -23,4 +23,25 @@ public record UserPoint(
 
         return new UserPoint(this.id, updatePoint, System.currentTimeMillis());
     }
+
+    public UserPoint use(long amount) {
+
+        invalidAmount(amount);
+
+        long updatePoint = this.point - amount;
+
+        // 포인트 잔액 부족 검증
+        if (updatePoint < 0){
+            throw new IllegalArgumentException(MessageConstants.INSUFFICIENT_POINTS);
+        }
+
+        return new UserPoint(this.id, updatePoint, System.currentTimeMillis());
+    }
+
+    public void invalidAmount(long amount) {
+        // 포인트 유효성 검사(음수 불가)
+        if (amount < 0) {
+            throw new IllegalArgumentException(MessageConstants.INVALID_AMOUNT);
+        }
+    }
 }

@@ -44,4 +44,18 @@ public class PointService {
 
         return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
     }
+
+    public UserPoint useUserPoint(long userId, long amount, long updateMillis) {
+
+        // 1. 사용자 조회
+        UserPoint selectUserPoint = userPointRepository.selectById(userId);
+
+        // 2. 사용자 포인트 사용
+        UserPoint updateUserPoint = selectUserPoint.use(amount);
+
+        // 3. 포인트 이력 생성
+        pointHistoryRepository.insert(userId, amount, TransactionType.USE, updateMillis);
+
+        return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
+    }
 }
