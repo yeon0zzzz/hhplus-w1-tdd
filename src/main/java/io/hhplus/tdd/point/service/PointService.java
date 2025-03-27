@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 
 @Service
 public class PointService {
@@ -57,5 +59,9 @@ public class PointService {
         pointHistoryRepository.insert(userId, amount, TransactionType.USE, updateMillis);
 
         return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
+    }
+
+    public List<PointHistory> getPointHistory(long userId) {
+        return pointHistoryRepository.selectAllByUserId(userId);
     }
 }
