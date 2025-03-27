@@ -1,17 +1,19 @@
 package io.hhplus.tdd.point.service;
 
 import io.hhplus.tdd.point.MessageConstants;
+import io.hhplus.tdd.point.PointHistory;
 import io.hhplus.tdd.point.TransactionType;
 import io.hhplus.tdd.point.UserPoint;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
-import org.apache.catalina.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -161,5 +163,46 @@ class PointServiceTest {
         assertThat(userPoint.updateMillis()).isEqualTo(updateMillis);
 
         verify(userPointRepository).selectById(eq(userId));
+    }
+
+    @Test
+    @DisplayName("사용자_포인트_내역_조회_성공_테스트")
+    void get_UserPointHistory_Success_Test() {
+        // given
+        long userId = 1L;
+        long amount = 100L;
+        long useAmount = 30L;
+        long updateMillis = System.currentTimeMillis();
+
+        given(pointHistoryRepository.selectAllByUserId(userId))
+                .willReturn(List.of(
+                        new PointHistory(1, userId, amount, TransactionType.CHARGE, updateMillis),
+                        new PointHistory(2, userId, amount, TransactionType.CHARGE, updateMillis),
+                        new PointHistory(3, userId, useAmount, TransactionType.USE, updateMillis)
+                ));
+
+        // when
+        List<PointHistory> pointHistories = pointService.getPointHistory(userId);
+
+        // then
+        assertThat(pointHistories).hasSize(3);
+        assertThat(pointHistories.get(0).amount()).isEqualTo(100L);
+        assertThat(pointHistories.get(2).amount()).isEqualTo(30L);
+        assertThat(pointHistories.get(2).type()).isEqualTo(TransactionType.USE);
+    }
+
+    @Test
+    @DisplayName("사용자_포인트_내역이_없을때_조회_테스트")
+    void get_UserPointHistory_Empty_Test() {
+        // given
+        long userId = 1L;
+
+        given(pointHistoryRepository.selectAllByUserId(userId)).willReturn(List.of());
+
+        // when
+        List<PointHistory> pointHistories = pointService.getPointHistory(userId);
+
+        // then
+        assertThat(pointHistories).isEmpty();
     }
 }
