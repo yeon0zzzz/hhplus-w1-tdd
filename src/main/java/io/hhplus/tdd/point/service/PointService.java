@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 @Service
@@ -18,6 +20,8 @@ public class PointService {
 
     private final UserPointRepository userPointRepository;
     private final PointHistoryRepository pointHistoryRepository;
+    private final ConcurrentHashMap<Long, ReentrantLock> userLocks = new ConcurrentHashMap<>();
+
 
     public PointService(
             @Qualifier("InMemoryUserPointRepository") UserPointRepository userPointRepository,
@@ -35,30 +39,45 @@ public class PointService {
 
     public UserPoint chargeUserPoint(long userId, long amount, long updateMillis) {
 
-        // 1. 사용자 조회
-        UserPoint selectUserPoint = userPointRepository.selectById(userId);
+        ReentrantLock user = userLocks.computeIfAbsent(userId, k -> new ReentrantLock());
+        user.lock();
 
-        // 2. 사용자 포인트 충전
-        UserPoint updateUserPoint = selectUserPoint.charge(amount);
+        try {
+            // 1. 사용자 조회
+            UserPoint selectUserPoint = userPointRepository.selectById(userId);
 
-        // 3. 포인트 이력 생성
-        pointHistoryRepository.insert(userId, amount, TransactionType.CHARGE, updateMillis);
+            // 2. 사용자 포인트 충전
+            UserPoint updateUserPoint = selectUserPoint.charge(amount);
 
-        return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
+            // 3. 포인트 이력 생성
+            pointHistoryRepository.insert(userId, amount, TransactionType.CHARGE, updateMillis);
+
+            return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
+        } finally {
+            user.unlock();
+        }
     }
 
     public UserPoint useUserPoint(long userId, long amount, long updateMillis) {
 
-        // 1. 사용자 조회
-        UserPoint selectUserPoint = userPointRepository.selectById(userId);
+        ReentrantLock user = userLocks.computeIfAbsent(userId, k -> new ReentrantLock());
+        user.lock();
 
-        // 2. 사용자 포인트 사용
-        UserPoint updateUserPoint = selectUserPoint.use(amount);
+        try {
+            // 1. 사용자 조회
+            UserPoint selectUserPoint = userPointRepository.selectById(userId);
 
-        // 3. 포인트 이력 생성
-        pointHistoryRepository.insert(userId, amount, TransactionType.USE, updateMillis);
+            // 2. 사용자 포인트 사용
+            UserPoint updateUserPoint = selectUserPoint.use(amount);
 
-        return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
+            // 3. 포인트 이력 생성
+            pointHistoryRepository.insert(userId, amount, TransactionType.USE, updateMillis);
+
+            return userPointRepository.insertOrUpdate(userId, updateUserPoint.point());
+        } finally {
+            user.unlock();
+        }
+
     }
 
     public List<PointHistory> getPointHistory(long userId) {
